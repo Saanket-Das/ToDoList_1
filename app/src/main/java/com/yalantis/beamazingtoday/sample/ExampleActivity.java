@@ -23,9 +23,6 @@ import com.yalantis.beamazingtoday.util.TypefaceUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by galata on 20.07.16.
- */
 public class ExampleActivity extends AppCompatActivity implements BatListener, OnItemClickListener, OnOutsideClickedListener {
 
     private BatRecyclerView mRecyclerView;
@@ -38,40 +35,51 @@ public class ExampleActivity extends AppCompatActivity implements BatListener, O
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_example);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setTitle("");
 
-        ((TextView) findViewById(R.id.text_title)).setTypeface(TypefaceUtil.getAvenirTypeface(this));
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setTitle("");
+        }
 
-        mRecyclerView = (BatRecyclerView) findViewById(R.id.bat_recycler_view);
+        TextView titleText = findViewById(R.id.text_title);
+        if (titleText != null) {
+            titleText.setTypeface(TypefaceUtil.getAvenirTypeface(this));
+        }
+
+        mRecyclerView = findViewById(R.id.bat_recycler_view);
         mAnimator = new BatItemAnimator();
 
+        // Initialize goals first
+        mGoals = new ArrayList<>();
+        mGoals.add(new Goal("first"));
+        mGoals.add(new Goal("second"));
+        mGoals.add(new Goal("third"));
+        mGoals.add(new Goal("fourth"));
+        mGoals.add(new Goal("fifth"));
+        mGoals.add(new Goal("sixth"));
+        mGoals.add(new Goal("seventh"));
+        mGoals.add(new Goal("eighth"));
+        mGoals.add(new Goal("ninth"));
+        mGoals.add(new Goal("tenth"));
+
+        // Initialize Adapter
+        mAdapter = new BatAdapter(mGoals, this, mAnimator)
+                .setOnItemClickListener(this)
+                .setOnOutsideClickListener(this);
+
         mRecyclerView.getView().setLayoutManager(new LinearLayoutManager(this));
-        mRecyclerView.getView().setAdapter(mAdapter = new BatAdapter(mGoals = new ArrayList<BatModel>() {{
-            add(new Goal("first"));
-            add(new Goal("second"));
-            add(new Goal("third"));
-            add(new Goal("fourth"));
-            add(new Goal("fifth"));
-            add(new Goal("sixth"));
-            add(new Goal("seventh"));
-            add(new Goal("eighth"));
-            add(new Goal("ninth"));
-            add(new Goal("tenth"));
-        }}, this, mAnimator).setOnItemClickListener(this).setOnOutsideClickListener(this));
+        mRecyclerView.getView().setAdapter(mAdapter);
 
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new BatCallback(this));
         itemTouchHelper.attachToRecyclerView(mRecyclerView.getView());
         mRecyclerView.getView().setItemAnimator(mAnimator);
         mRecyclerView.setAddItemListener(this);
 
-        findViewById(R.id.root).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mRecyclerView.revertAnimation();
-            }
-        });
+        View rootView = findViewById(R.id.root);
+        if (rootView != null) {
+            rootView.setOnClickListener(v -> mRecyclerView.revertAnimation());
+        }
     }
 
     @Override
@@ -82,16 +90,18 @@ public class ExampleActivity extends AppCompatActivity implements BatListener, O
 
     @Override
     public void delete(int position) {
-        mGoals.remove(position);
-        mAdapter.notify(AnimationType.REMOVE, position);
+        if (position >= 0 && position < mGoals.size()) {
+            mGoals.remove(position);
+            mAdapter.notify(AnimationType.REMOVE, position);
+        }
     }
 
     @Override
     public void move(int from, int to) {
-        if (from >= 0 && to >= 0) {
+        if (from >= 0 && to >= 0 && from < mGoals.size() && to < mGoals.size()) {
             mAnimator.setPosition(to);
             BatModel model = mGoals.get(from);
-            mGoals.remove(model);
+            mGoals.remove(from);
             mGoals.add(to, model);
             mAdapter.notify(AnimationType.MOVE, from, to);
 
@@ -103,7 +113,9 @@ public class ExampleActivity extends AppCompatActivity implements BatListener, O
 
     @Override
     public void onClick(BatModel item, int position) {
-        Toast.makeText(this, item.getText(), Toast.LENGTH_SHORT).show();
+        if (item != null) {
+            Toast.makeText(this, item.getText(), Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
